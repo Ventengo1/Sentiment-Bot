@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stock Sentiment Analyzer</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    {% include 'header.html' %}
+
+    <form method="POST">
+        <input type="text" name="ticker" placeholder="Enter Stock Symbol (AAPL)" required>
+        <button type="submit">Analyze</button>
+    </form>
+
+    {% if ticker %}
+        <h2>Sentiment Summary for {{ ticker }}</h2>
+        {% for sentiment, count in sentiment_counts.items() %}
+            <p style="color: {{ sentiment_colors[sentiment] }};">{{ sentiment }}: {{ count }}</p>
+        {% endfor %}
+        <h3>Overall: <span style="color: {{ overall_color }}">{{ overall }}</span></h3>
+
+        <h3>📰 Headlines</h3>
+        {% for item in articles %}
+            <div class="article" style="border-left: 5px solid {{ item.color }}">
+                <h4 style="color: {{ item.color }}">{{ item.sentiment }}</h4>
+                <p><strong>{{ item.title }}</strong></p>
+                <p><em>{{ item.snippet }}</em></p>
+                <p>👍 {{ item.pos }} | 👎 {{ item.neg }} | Score: {{ item.score }}</p>
+                <a href="{{ item.link }}" target="_blank">🔗 Read More</a>
+            </div>
+        {% endfor %}
+
+        <h3>📉 Stock Chart</h3>
+        <canvas id="chart"></canvas>
+
+        <h3>🏢 Company Overview</h3>
+        <ul>
+            <li>Sector: {{ stats.sector }}</li>
+            <li>Market Cap: {{ stats.market_cap }}</li>
+            <li>P/E Ratio: {{ stats.pe_ratio }}</li>
+            <li>Dividend Yield: {{ stats.div_yield }}</li>
+            <li>52-Week Range: {{ stats.week_52_range }}</li>
+        </ul>
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const chartData = {{ chart_data|tojson }};
+        const ctx = document.getElementById('chart').getContext('2d');
+        if (chartData.length > 0) {
+            const labels = chartData.map(d => d.Date.split('T')[0]);
+            const values = chartData.map(d => d.Close);
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Close Price',
+                        data: values,
+                        borderColor: 'blue',
+                        fill: false
+                    }]
+                }
+            });
+        }
+    </script>
+</body>
+</html>
