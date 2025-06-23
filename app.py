@@ -122,9 +122,13 @@ def index():
             end_date = datetime.today()
             start_date = end_date - timedelta(days=30)
             df = yf.download(ticker, start=start_date, end=end_date)
-            chart_data = df["Close"].round(2).reset_index().to_dict(orient="records")
+            chart_data = [
+                {"Date": row["Date"].strftime("%Y-%m-%d"), "Close": round(row["Close"], 2)}
+                for row in df.reset_index().to_dict("records")
+                if "Date" in row and "Close" in row
+            ]
         except:
-            pass
+            chart_data = []
 
         try:
             info = yf.Ticker(ticker).info
@@ -136,7 +140,7 @@ def index():
                 "week_52_range": f"${info.get('fiftyTwoWeekLow', 'N/A')} - ${info.get('fiftyTwoWeekHigh', 'N/A')}"
             }
         except:
-            pass
+            stats = {}
 
         context = {
             "ticker": ticker,
@@ -144,7 +148,7 @@ def index():
             "sentiment_counts": sentiment_counts,
             "overall": overall,
             "overall_color": sentiment_colors[overall],
-            "chart_data": chart_data,
+            "chart_data": chart_data or [],
             "stats": stats,
             "sentiment_colors": sentiment_colors
         }
