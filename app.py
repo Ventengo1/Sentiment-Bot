@@ -86,6 +86,10 @@ def search_stock_news_google(stock_symbol, max_results=25):
         start_index += 10
     return all_results
 
+@app.route("/home")
+def home():
+    return render_template("home.html")
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     context = {}
