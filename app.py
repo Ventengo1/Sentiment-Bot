@@ -63,6 +63,29 @@ def search_stock_news_google(stock_symbol, max_results=25):
     all_results = []
     start_index = 1
 
+    def _parse_published(item):
+        # try common metatag keys for published time
+        pagemap = item.get("pagemap", {}) if isinstance(item, dict) else {}
+        metatags = pagemap.get("metatags", []) if isinstance(pagemap.get("metatags", []), list) else []
+        candidates = []
+        for meta in metatags:
+            for key in ("article:published_time","article:modified_time","og:published_time","og:updated_time","pubdate","datePublished","dc.date"):
+                if key in meta:
+                    candidates.append(meta[key])
+        # sometimes the item itself may have a "snippet" with a date or "published" field; fallback to none
+        for c in candidates:
+            try:
+                # try ISO parse
+                return datetime.fromisoformat(c.replace("Z", "+00:00"))
+            except Exception:
+                # try common formats
+                for fmt in ("%Y-%m-%dT%H:%M:%S%z","%Y-%m-%dT%H:%M:%S","%Y-%m-%d %H:%M:%S","%Y-%m-%d"):
+                    try:
+                        return datetime.strptime(c, fmt)
+                    except Exception:
+                        continue
+        return None
+
     while len(all_results) < max_results:
         params["start"] = start_index
         response = requests.get(url, params=params)
@@ -79,16 +102,22 @@ def search_stock_news_google(stock_symbol, max_results=25):
             if "stock quote" in snippet.lower() or "historical data" in snippet.lower():
                 continue
 
+            published_dt = _parse_published(item) or datetime.utcnow()
+
             all_results.append({
                 "title": title,
                 "link": link,
-                "snippet": snippet
+                "snippet": snippet,
+                "published": published_dt
             })
 
             if len(all_results) >= max_results:
                 break
 
         start_index += 10
+
+    # sort by published datetime (most recent first)
+    all_results.sort(key=lambda x: x.get("published", datetime.utcnow()), reverse=True)
 
     return all_results
 
@@ -165,7 +194,8 @@ if ticker:
                     "pos": pos,
                     "neg": neg,
                     "link": link,
-                    "snippet": snippet
+                    "snippet": snippet,
+                    "published": article.get("published")
                 })
 
             average_score = total_score / len(scored_articles)
@@ -191,12 +221,15 @@ if ticker:
 
             for item in scored_articles:
                 color = sentiment_colors[item['sentiment']]
+                pub = item.get("published")
+                pub_str = pub.strftime("%Y-%m-%d %H:%M UTC") if isinstance(pub, datetime) else ""
                 with st.container():
                     st.markdown(f"""
                         <div style='border-left: 5px solid {color}; padding-left: 15px; margin-bottom: 10px;'>
                             <h5 style='margin:0;'>
                                 <span style='color:{color}; font-weight:700;'>{item['sentiment']}</span> — <b>{item['title']}</b>
                             </h5>
+                            <small style='color:#666'>{pub_str}</small><br>
                             <i>{(item['snippet'][:180] + ('…' if len(item['snippet'])>180 else ''))}</i><br>
                             <small>👍 {item['pos']} | 👎 {item['neg']} | Score: {item['score']}</small><br>
                             <a href="{item['link']}" target="_blank">🔗 Read More</a>
