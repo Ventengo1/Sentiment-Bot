@@ -10,10 +10,11 @@ API_KEY = "AIzaSyATbwRYRrjv5JvCyJfw8pxvM2px6yhC0kg"
 CSE_ID = "42708dbcedbe142d2"
 
 # --- Sentiment Keywords ---
-very_positive_keywords = {"skyrocket", "blockbuster", "blowout", "explode", "unprecedented", "all time high", "record-breaking", "soars", "multiple", "expansion", "soar"}
-positive_keywords = {"gain", "trending", "high", "gains", "rise", "rises", "raises", "beat", "beats" "expectations", "surge", "surges", "record", "profit", "strong", "up", "increase", "increases", "growth", "positive", "upgrade", "upgraded", "buy", "bullish", "rally", "boost", "opportunity", "leads", "upside", "boosts", "rallied", "outperforms", "accelerating", "great", "rebounds", "Bull", "best"}
-negative_keywords = {"loss", "fall", "falls", "drop", "drops", "decline", "miss", "misses", "shortfall", "cut", "downgrade", "downgraded", "margin shortfall", "bearish", "warn", "weak", "down", "decrease", "layoff", "negative", "recall", "lawsuit", "hurt", "tariffs", "missed", "bad", "crossfire", "lower", "slams", "cut", "cuts", "downgrades", "slides", "pain"}
-very_negative_keywords = {"collapse", "bankruptcy", "scandal", "meltdown", "fraud", "devastating", "catastrophic", "all-time low", "crash", "underperforming", "plunge", "plunges", "crisis", "death", "cross", "plummeting", "slashes", "collapsed", "crater", }
+# --- Sentiment Keywords (fixed & expanded) ---
+very_positive_keywords = {"skyrocket","blockbuster","blowout","explode","unprecedented","all time high","record-breaking","soars","multiple","expansion","soar","breakout","all-time high","record"}
+positive_keywords = {"gain","trending","high","gains","rise","rises","raises","beat","beats", "expectations","surge","surges", "profit","strong","up","increase","increases","growth","positive","upgrade","upgraded","buy","bullish","rally","boost","opportunity","leads","upside","boosts","rallied","outperforms","accelerating","great","rebounds","bull","best","jump","jumps","momentum"}
+negative_keywords = {"loss","fall","falls","drop","drops","decline","miss","misses","shortfall","cut","downgrade","downgraded","margin shortfall","bearish","warn","weak","down","decrease","layoff","negative","recall","lawsuit","hurt","tariffs","missed","bad","crossfire","lower","slams","cuts","downgrades","slides","pain","headwind"}
+very_negative_keywords = {"collapse","bankruptcy","scandal","meltdown","fraud","devastating","catastrophic","all-time low","crash","underperforming","plunge","plunges","crisis","death","cross","plummeting","slashes","collapsed","crater"}
 
 # --- Sentiment Scoring ---
 def get_sentiment_weighted(text):
@@ -193,9 +194,10 @@ if ticker:
                 with st.container():
                     st.markdown(f"""
                         <div style='border-left: 5px solid {color}; padding-left: 15px; margin-bottom: 10px;'>
-                            <h5 style='color: {color};'>{item['sentiment']}</h5>
-                            <b>{item['title']}</b><br>
-                            <i>{item['snippet']}</i><br>
+                            <h5 style='margin:0;'>
+                                <span style='color:{color}; font-weight:700;'>{item['sentiment']}</span> — <b>{item['title']}</b>
+                            </h5>
+                            <i>{(item['snippet'][:180] + ('…' if len(item['snippet'])>180 else ''))}</i><br>
                             <small>👍 {item['pos']} | 👎 {item['neg']} | Score: {item['score']}</small><br>
                             <a href="{item['link']}" target="_blank">🔗 Read More</a>
                         </div>
