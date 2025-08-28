@@ -275,4 +275,28 @@ if ticker:
                  </div>
              """, unsafe_allow_html=True)
         except Exception as e:
-             st.error("Could not load company info.")
+             st.error("Could not load company info.") 
+
+                # --- Analyst Recommendations ---
+        st.markdown("### 📌 Analyst Recommendations")
+        try:
+            stock = yf.Ticker(ticker)
+            if hasattr(stock, "recommendations_summary") and stock.recommendations_summary is not None:
+                rec = stock.recommendations_summary
+                df = pd.DataFrame(rec)
+                if not df.empty:
+                    df = df.T  # transpose so labels are columns
+                    st.dataframe(df.style.highlight_max(axis=1, color="lightgreen"))
+                else:
+                    st.info("No analyst recommendations available.")
+            else:
+                # fallback for older yfinance
+                rec = stock.recommendations
+                if rec is not None and not rec.empty:
+                    recent_rec = rec.tail(10)[["Firm","To Grade","From Grade","Action"]]
+                    st.dataframe(recent_rec)
+                else:
+                    st.info("No analyst recommendations available.")
+        except Exception as e:
+            st.error(f"Could not fetch analyst recommendations: {e}")
+     
