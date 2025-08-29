@@ -277,7 +277,7 @@ if ticker:
         except Exception as e:
              st.error("Could not load company info.") 
 
-                # --- Analyst Recommendations ---
+                        # --- Analyst Recommendations --- LETS GOOOOO!!! ---- I think this is it 
         st.markdown("### 📌 Analyst Recommendations")
         try:
             stock = yf.Ticker(ticker)
@@ -285,8 +285,27 @@ if ticker:
                 rec = stock.recommendations_summary
                 df = pd.DataFrame(rec)
                 if not df.empty:
-                    df = df.T  # transpose so labels are columns
+                    df = df.T  # transpose for readability
                     st.dataframe(df.style.highlight_max(axis=1, color="lightgreen"))
+
+                    # --- Pie chart for recommendation distribution ---
+                    if "strongBuy" in df.columns or "buy" in df.columns:
+                        counts = {
+                            "Strong Buy": df.get("strongBuy", [0])[0],
+                            "Buy": df.get("buy", [0])[0],
+                            "Hold": df.get("hold", [0])[0],
+                            "Sell": df.get("sell", [0])[0],
+                            "Strong Sell": df.get("strongSell", [0])[0],
+                        }
+                        # Filter out zero values
+                        counts = {k: v for k, v in counts.items() if v > 0}
+                        if counts:
+                            st.markdown("#### 📊 Recommendation Breakdown")
+                            st.pyplot(
+                                pd.Series(counts).plot.pie(
+                                    autopct="%1.1f%%", figsize=(4, 4), ylabel=""
+                                ).get_figure()
+                            )
                 else:
                     st.info("No analyst recommendations available.")
             else:
@@ -299,4 +318,5 @@ if ticker:
                     st.info("No analyst recommendations available.")
         except Exception as e:
             st.error(f"Could not fetch analyst recommendations: {e}")
-     
+
+
