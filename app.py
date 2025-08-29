@@ -4,6 +4,7 @@ import requests
 import yfinance as yf
 import pandas as pd
 from datetime import datetime, timedelta
+import matplotlib.pyplot as plt
 
 # --- Configurations ---
 API_KEY = "AIzaSyATbwRYRrjv5JvCyJfw8pxvM2px6yhC0kg"
@@ -278,12 +279,14 @@ if ticker:
              st.error("Could not load company info.") 
 
                         # --- Analyst Recommendations --- LETS GOOOOO!!! ---- I think this is it 
+                
         st.markdown("### 📌 Analyst Recommendations")
         try:
             stock = yf.Ticker(ticker)
             if hasattr(stock, "recommendations_summary") and stock.recommendations_summary is not None:
                 rec = stock.recommendations_summary
                 df = pd.DataFrame(rec)
+
                 if not df.empty:
                     df = df.T  # transpose for readability
                     st.dataframe(df.style.highlight_max(axis=1, color="lightgreen"))
@@ -297,26 +300,34 @@ if ticker:
                             "Sell": df.get("sell", [0])[0],
                             "Strong Sell": df.get("strongSell", [0])[0],
                         }
-                        # Filter out zero values
+                        # Remove categories with zero values
                         counts = {k: v for k, v in counts.items() if v > 0}
                         if counts:
+                            import matplotlib.pyplot as plt
                             st.markdown("#### 📊 Recommendation Breakdown")
-                            st.pyplot(
-                                pd.Series(counts).plot.pie(
-                                    autopct="%1.1f%%", figsize=(4, 4), ylabel=""
-                                ).get_figure()
+
+                            fig, ax = plt.subplots(figsize=(4, 4))
+                            colors = ["#27ae60", "#2ecc71", "#95a5a6", "#e74c3c", "#c0392b"]  # green→gray→red
+                            ax.pie(
+                                counts.values(),
+                                labels=counts.keys(),
+                                autopct="%1.1f%%",
+                                startangle=90,
+                                colors=colors[:len(counts)],
                             )
+                            ax.axis("equal")  # Equal aspect ratio
+                            st.pyplot(fig)
+
                 else:
                     st.info("No analyst recommendations available.")
             else:
                 # fallback for older yfinance
                 rec = stock.recommendations
                 if rec is not None and not rec.empty:
-                    recent_rec = rec.tail(10)[["Firm","To Grade","From Grade","Action"]]
+                    recent_rec = rec.tail(10)[["Firm", "To Grade", "From Grade", "Action"]]
                     st.dataframe(recent_rec)
                 else:
                     st.info("No analyst recommendations available.")
         except Exception as e:
             st.error(f"Could not fetch analyst recommendations: {e}")
-
 
